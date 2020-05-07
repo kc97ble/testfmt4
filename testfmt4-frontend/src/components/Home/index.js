@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Navbar from "react-bootstrap/Navbar";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import Form from "react-bootstrap/Form";
+import * as api from "./api";
 
 function TopBar() {
   return (
@@ -37,22 +38,17 @@ function MainForm() {
           {JSON.stringify(files)}
         </Form.File.Label>
       </Form.File>
-      <Button variant="primary" type="submit">
+      <Button
+        variant="primary"
+        onClick={() => {
+          api.uploadFile(files[0]);
+        }}
+      >
         Submit
       </Button>
     </Form>
   );
 }
-
-// class MainForm extends React.Component {
-//   fileChanged = (event) => {
-//     console.log(event.target.files);
-//     alert("fileChanged");
-//   };
-//   render() {
-
-//   }
-// }
 
 export default class Home extends React.Component {
   render() {
