@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import Navbar from "react-bootstrap/Navbar";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import Form from "react-bootstrap/Form";
-import * as api from "./api";
+import { useHistory } from "react-router-dom";
+
+import * as api from "../../api";
 
 function TopBar() {
   return (
@@ -23,7 +25,7 @@ function TopBar() {
 
 function MainForm() {
   const [files, setFiles] = useState(null);
-
+  const history = useHistory();
   return (
     <Form>
       <Form.File id="formcheck-api-custom" custom>
@@ -40,8 +42,9 @@ function MainForm() {
       </Form.File>
       <Button
         variant="primary"
-        onClick={() => {
-          api.uploadFile(files[0]);
+        onClick={async () => {
+          const { uploaded_file_id: fileID } = await api.uploadFile(files[0]);
+          history.push("/edit/" + fileID);
         }}
       >
         Submit

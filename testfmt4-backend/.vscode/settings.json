@@ -1,4 +1,9 @@
 {
   "python.pythonPath": "/home/summer/Documents/testfmt4/testfmt4-backend/venv/bin/python3",
-  "workbench.colorTheme": "Solarized Dark"
+  "workbench.colorTheme": "Solarized Dark",
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/venv/*/**": true
+  }
 }
