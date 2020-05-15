@@ -1,5 +1,4 @@
 const BACKEND = process.env.BACKEND || "http://localhost:5000";
-const PUBLIC_BACKEND = process.env.PUBLIC_BACKEND || "http://localhost:5000";
 
 function getFormDataFromParams(params, keys) {
   const formData = new FormData();
@@ -56,7 +55,7 @@ export async function getPrefilledInputs(params) {
 }
 
 export function getDownloadLink(fileID) {
-  return `${PUBLIC_BACKEND}/download/${fileID}`;
+  return `${BACKEND}/download/${fileID}`;
 }
 
 export function downloadFile(fileID) {
