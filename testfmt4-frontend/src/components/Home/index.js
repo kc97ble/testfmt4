@@ -17,20 +17,45 @@ function get(obj, ...args) {
   return obj;
 }
 
+function UploadButton(props) {
+  const { onClick } = props;
+  const [loading, setLoading] = useState(false);
+  const caption = loading ? "Uploading..." : "Upload";
+  return (
+    <Button
+      variant="primary"
+      className="mt-3"
+      block={true}
+      onClick={async (e) => {
+        setLoading(true);
+        await onClick(e);
+        setLoading(false);
+      }}
+      disabled={loading}
+    >
+      {caption}
+    </Button>
+  );
+}
+
 function MainForm() {
   const [files, setFiles] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const history = useHistory();
   const fileName = get(files, 0, "name");
+  const caption = loading ? "Uploading..." : "Upload";
 
   return (
     <Form>
-      <Form.File id="formcheck-api-custom" custom>
+      <Form.File custom>
         <Form.File.Input
           files={files}
           onChange={(e) => {
             console.log(e.target.files);
             setFiles(e.target.files);
           }}
+          disabled={loading}
         />
         <Form.File.Label data-browse="Choose file">{fileName || ""}</Form.File.Label>
       </Form.File>
@@ -38,13 +63,15 @@ function MainForm() {
         variant="primary"
         className="mt-3"
         block={true}
-        disabled={!fileName}
+        disabled={!fileName || loading}
         onClick={async () => {
+          setLoading(true);
           const { file_id: fileID } = await api.uploadFile({ file: files[0] });
+          setLoading(false);
           history.push("/edit/" + fileID);
         }}
       >
-        Upload
+        {caption}
       </Button>
     </Form>
   );

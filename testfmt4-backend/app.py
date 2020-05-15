@@ -19,28 +19,24 @@ def hello_world():
 def upload():
     file = request.files["file"]
     file_id = logic.save_file(file)
-    time.sleep(2)
     return {"file_id": file_id}
 
 
 @app.route("/preview", methods=["POST"])
 def preview():
     result = logic.preview(request.form.to_dict())
-    time.sleep(2)
     return result
 
 
 @app.route("/convert", methods=["POST"])
 def convert():
     result = logic.convert(request.form.to_dict())
-    time.sleep(2)
     return result
 
 
 @app.route("/prefill", methods=["POST"])
 def prefill():
     result = logic.prefill(request.form.to_dict())
-    time.sleep(2)
     return result
 
 

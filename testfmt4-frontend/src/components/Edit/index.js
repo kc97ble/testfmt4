@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
+import Spinner from "react-bootstrap/Spinner";
 import { useHistory, useParams } from "react-router-dom";
 import * as api from "../../api";
 import TopBar from "../../common/TopBar";
 import "../../common/sharedStyles.css";
+import "./styles.css";
 
 function fieldChanged(state, setState) {
   return (event) => {
@@ -33,7 +35,7 @@ function Preview(props) {
   return (
     <Form.Group>
       <Form.Label>Preview</Form.Label>
-      <Form.Control as="textarea" value={previewLines.join("\n")} readOnly />
+      <Form.Control rows="10" as="textarea" value={previewLines.join("\n")} readOnly />
     </Form.Group>
   );
 }
@@ -112,77 +114,116 @@ function FileNameInput(props) {
   );
 }
 
-function ActionButtons(props) {
-  const history = useHistory();
-  const { fileID, bef, setBef, aft, setAft, fileName } = props;
-
+function RefreshButton(props) {
+  const { onClick } = props;
+  const [loading, setLoading] = useState(false);
+  const caption = loading ? "Refreshing..." : "Refresh";
   return (
-    <>
-      <Button
-        variant="secondary"
-        className="mr-1"
-        onClick={async () => {
-          const { bef_preview, aft_preview } = await previewTestSuite(fileID, bef, aft);
-          setBef({ ...bef, preview: bef_preview });
-          setAft({ ...aft, preview: aft_preview });
-        }}
-      >
-        Refresh
-      </Button>
-      <Button
-        variant="primary"
-        className="mr-2"
-        onClick={async () => {
-          const { file_id } = await convertTestSuite(fileID, bef, aft, fileName);
-          history.push(`/download/${file_id}`);
-        }}
-      >
-        Download
-      </Button>
-    </>
+    <Button
+      variant="secondary"
+      className="mr-1 long-button"
+      onClick={async (e) => {
+        setLoading(true);
+        await onClick(e);
+        setLoading(false);
+      }}
+      disabled={loading}
+    >
+      {caption}
+    </Button>
+  );
+}
+
+function DownloadButton(props) {
+  const { onClick } = props;
+  const [loading, setLoading] = useState(false);
+  const caption = loading ? "Downloading..." : "Download";
+  return (
+    <Button
+      variant="primary"
+      className="mr-1 long-button"
+      onClick={async (e) => {
+        setLoading(true);
+        await onClick(e);
+        setLoading(false);
+      }}
+      disabled={loading}
+    >
+      {caption}
+    </Button>
   );
 }
 
 function EditForm(props) {
   const { fileID } = props;
+  const history = useHistory();
+
   const [bef, setBef] = useState({ inpFormat: "", outFormat: "", preview: [] });
   const [aft, setAft] = useState({ inpFormat: "", outFormat: "", preview: [] });
   const [fileName, setFileName] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const onRefresh = async () => {
+    const { bef_preview, aft_preview } = await previewTestSuite(fileID, bef, aft);
+    setBef({ ...bef, preview: bef_preview });
+    setAft({ ...aft, preview: aft_preview });
+  };
+
+  const onDownload = async () => {
+    const { file_id } = await convertTestSuite(fileID, bef, aft, fileName);
+    history.push(`/download/${file_id}`);
+  };
 
   useEffect(() => {
     (async () => {
       const { file_name, inp_format, out_format } = await getPrefilledInputs(fileID);
       setFileName(file_name || "");
       setBef({ inpFormat: inp_format, outFormat: out_format, preview: [] });
+      const { bef_preview, aft_preview } = await previewTestSuite(fileID, bef, aft);
+      setBef({ ...bef, preview: bef_preview });
+      setAft({ ...aft, preview: aft_preview });
+      setLoading(false);
     })();
   }, [fileID]);
 
   return (
-    <Form>
-      <Row>
-        <Col>
-          <OneSide state={bef} setState={setBef} />
-        </Col>
-        <Col>
-          <OneSide state={aft} setState={setAft} />
+    <div>
+      <Row style={{ display: loading ? "block" : "none" }}>
+        <Col style={{ display: "flex", justifyContent: "center" }}>
+          <Spinner animation="border" />
         </Col>
       </Row>
-      <Row>
+      <Row style={{ display: loading ? "none" : "block" }}>
         <Col>
-          <Preview bef={bef} aft={aft} />
+          <Form>
+            <Row>
+              <Col>
+                <OneSide state={bef} setState={setBef} />
+              </Col>
+              <Col>
+                <OneSide state={aft} setState={setAft} />
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <Preview bef={bef} aft={aft} />
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <FileNameInput state={fileName} setState={setFileName} />
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <RefreshButton onClick={onRefresh} />
+                <DownloadButton onClick={onDownload} />
+              </Col>
+            </Row>
+          </Form>
         </Col>
       </Row>
-      <Row>
-        <Col>
-          <FileNameInput state={fileName} setState={setFileName} />
-        </Col>
-      </Row>
-      <Row>
-        <Col>
-          <ActionButtons fileID={fileID} bef={bef} setBef={setBef} aft={aft} setAft={setAft} fileName={fileName} />
-        </Col>
-      </Row>
-    </Form>
+    </div>
   );
 }
 
