@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-const BACKEND = process.env.BACKEND || "http://localhost:5000";
+const BACKEND = process.env.REACT_APP_BACKEND || "http://localhost:5000";
 
 function getFormDataFromParams(params, keys) {
   const formData = new FormData();
