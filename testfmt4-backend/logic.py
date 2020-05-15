@@ -3,6 +3,7 @@ from operator import itemgetter
 
 import storage
 import database
+import detect
 
 
 class TestSuiteFormat:
@@ -46,7 +47,7 @@ class TestSuite:
     def analyze_raw_test_suite(cls, file_id, test_suite_format):
         paths = storage.get_file_list_in_archive(file_id)
         test_list = []
-        extra_files = set(paths)
+        extra_files = list(paths)
 
         # this stupid nested loop can be optimized
         for item in paths:
@@ -149,8 +150,8 @@ def prefill(params):
     info = database.get_upload_info(file_id)
 
     file_name = info["file_name"]
-    inp_format = ""  # TODO
-    out_format = ""  # TODO
+    names = storage.get_file_list_in_archive(file_id)
+    inp_format, out_format = detect.find_best_format(names)
 
     return {
         "file_name": file_name,

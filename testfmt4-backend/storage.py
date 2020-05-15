@@ -10,10 +10,28 @@ def id_to_path(id):
     return os.path.join(settings.UPLOAD_FOLDER, id)
 
 
+def get_char_kind(char):
+    return 1 if char.isdigit() else 2 if char.isalpha() else 3
+
+
+def sorting_key(name):
+    result = []
+    last_kind = -1
+    for char in name:
+        curr_kind = get_char_kind(char)
+        if curr_kind != last_kind:
+            result.append("")
+        result[-1] += char
+        last_kind = curr_kind
+
+    return [x.zfill(16) if x.isdigit() else x for x in result]
+
+
 def get_file_list_in_archive(file_id):
     path = id_to_path(file_id)
     with ZipFile(path) as f:
-        return [x for x in f.namelist() if not x.endswith("/")]
+        result = [x for x in f.namelist() if not x.endswith("/")]
+        return list(sorted(result, key=sorting_key))
 
 
 def save_file(file, file_id, file_name):
