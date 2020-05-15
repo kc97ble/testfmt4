@@ -1,62 +1,64 @@
 const BACKEND = "http://localhost:5000";
+const PUBLIC_BACKEND = "http://localhost:5000";
 
-export async function uploadFile(file) {
+function getFormDataFromParams(params, keys) {
   const formData = new FormData();
-  formData.append("foo", "bar");
-  formData.append("file", file);
-  const response = await fetch(`${BACKEND}/upload`, {
-    method: "POST",
-    body: formData,
+  keys.forEach((k) => {
+    if (k in params) {
+      formData.append(k, params[k]);
+    } else {
+      throw new Error("Missing parameter");
+    }
   });
-  const { uploaded_file_id } = await response.json();
-  console.log({ uploaded_file_id });
-  return { uploaded_file_id };
+  return formData;
+}
+
+function filterKeys(obj, keys) {
+  const result = {};
+  keys.forEach((k) => {
+    result[k] = obj[k];
+  });
+  return result;
+}
+
+export async function uploadFile(params) {
+  const requiredKeys = ["file"];
+  const formData = getFormDataFromParams(params, requiredKeys);
+  const response = await fetch(`${BACKEND}/upload`, { method: "POST", body: formData });
+  return await response.json();
 }
 
 export async function previewTestSuite(params) {
-  const {
-    uploaded_file_id,
-    bef_inp_format,
-    bef_out_format,
-    aft_inp_format,
-    aft_out_format,
-  } = params;
-  const formData = new FormData();
-  formData.append("uploaded_file_id", uploaded_file_id);
-  formData.append("bef_inp_format", bef_inp_format);
-  formData.append("bef_out_format", bef_out_format);
-  formData.append("aft_inp_format", aft_inp_format);
-  formData.append("aft_out_format", aft_out_format);
-  const response = await fetch(`${BACKEND}/preview`, {
-    method: "POST",
-    body: formData,
-  });
-  const { bef_preview, aft_preview } = await response.json();
-  return { bef_preview, aft_preview };
+  const requiredKeys = ["file_id", "bef_inp_format", "bef_out_format", "aft_inp_format", "aft_out_format"];
+  const formData = getFormDataFromParams(params, requiredKeys);
+  const response = await fetch(`${BACKEND}/preview`, { method: "POST", body: formData });
+  const data = await response.json();
+  const expectedKeys = ["bef_preview", "aft_preview"];
+  return filterKeys(data, expectedKeys);
 }
 
 export async function convertTestSuite(params) {
-  const {
-    uploaded_file_id,
-    bef_inp_format,
-    bef_out_format,
-    aft_inp_format,
-    aft_out_format,
-  } = params;
-  const formData = new FormData();
-  formData.append("uploaded_file_id", uploaded_file_id);
-  formData.append("bef_inp_format", bef_inp_format);
-  formData.append("bef_out_format", bef_out_format);
-  formData.append("aft_inp_format", aft_inp_format);
-  formData.append("aft_out_format", aft_out_format);
-  const response = await fetch(`${BACKEND}/convert`, {
-    method: "POST",
-    body: formData,
-  });
-  const { file_id } = await response.json();
-  return { file_id };
+  const requiredKeys = ["file_id", "bef_inp_format", "bef_out_format", "aft_inp_format", "aft_out_format", "file_name"];
+  const formData = getFormDataFromParams(params, requiredKeys);
+  const response = await fetch(`${BACKEND}/convert`, { method: "POST", body: formData });
+  const data = await response.json();
+  const expectedKeys = ["file_id"];
+  return filterKeys(data, expectedKeys);
+}
+
+export async function getPrefilledInputs(params) {
+  const requiredKeys = ["file_id"];
+  const formData = getFormDataFromParams(params, requiredKeys);
+  const response = await fetch(`${BACKEND}/prefill`, { method: "POST", body: formData });
+  const data = await response.json();
+  const expectedKeys = ["inp_format", "out_format", "file_name"];
+  return filterKeys(data, expectedKeys);
+}
+
+export function getDownloadLink(fileID) {
+  return `${PUBLIC_BACKEND}/download/${fileID}`;
 }
 
 export function downloadFile(fileID) {
-  window.location.href = `${BACKEND}/download/${fileID}`;
+  window.location.href = getDownloadLink(fileID);
 }

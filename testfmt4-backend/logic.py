@@ -2,6 +2,7 @@ import uuid
 from operator import itemgetter
 
 import storage
+import database
 
 
 class TestSuiteFormat:
@@ -35,81 +36,129 @@ class TestSuiteFormat:
 
 
 class TestSuite:
-    def __init__(self, uploaded_file_id, test_suite_format, test_list, extra_files):
-        self.uploaded_file_id = uploaded_file_id
+    def __init__(self, file_id, test_suite_format, test_list, extra_files):
+        self.file_id = file_id
         self.test_suite_format = test_suite_format
         self.test_list = test_list
         self.extra_files = extra_files
 
     @classmethod
-    def analyze_raw_test_suite(cls, uploaded_file_id, test_suite_format):
-        paths = storage.get_file_list_in_archive(uploaded_file_id)
+    def analyze_raw_test_suite(cls, file_id, test_suite_format):
+        paths = storage.get_file_list_in_archive(file_id)
         test_list = []
         extra_files = set(paths)
 
         # this stupid nested loop can be optimized
         for item in paths:
             for jtem in paths:
-                test_id = test_suite_format.get_test_id(item, jtem)
-                if test_id is not None:
-                    test_list.append((test_id, item, jtem))
-                    extra_files.remove(item)
-                    extra_files.remove(jtem)
+                if item != jtem:
+                    test_id = test_suite_format.get_test_id(item, jtem)
+                    if test_id is not None:
+                        test_list.append((test_id, item, jtem))
+                        extra_files.remove(item)
+                        extra_files.remove(jtem)
 
         return test_list, list(extra_files)
 
     @classmethod
-    def get_test_suite(cls, uploaded_file_id, inp_format, out_format):
+    def get_test_suite(cls, file_id, inp_format, out_format):
         test_suite_format = TestSuiteFormat(inp_format, out_format)
         test_list, extra_files = TestSuite.analyze_raw_test_suite(
-            uploaded_file_id, test_suite_format
+            file_id, test_suite_format
         )
-        return TestSuite(uploaded_file_id, test_suite_format, test_list, extra_files)
+        return TestSuite(file_id, test_suite_format, test_list, extra_files)
 
-    def get_name_list(self):
-        result = []
+    def get_name_list(self, add_extra_info=False):
+        important_files = []
+
         for test in self.test_list:
             test_id, _, _ = test
-            result.append(self.test_suite_format.get_inp_name(test_id))
-            result.append(self.test_suite_format.get_out_name(test_id))
-        result.extend(self.extra_files)
+            inp_name = self.test_suite_format.get_inp_name(test_id)
+            out_name = self.test_suite_format.get_out_name(test_id)
+            important_files.extend([inp_name, out_name])
+
+        result = []
+
+        for name in important_files:
+            if add_extra_info:
+                result.append({"value": name, "is_extra_file": False})
+            else:
+                result.append(name)
+
+        for name in self.extra_files:
+            if add_extra_info:
+                result.append({"value": name, "is_extra_file": True})
+            else:
+                result.append(name)
+
         return result
 
 
 def save_file(file):
-    uploaded_file_id = str(uuid.uuid4())
-    path = storage.id_to_path(uploaded_file_id)
-    file.save(path)
-    return uploaded_file_id
+    file_id = str(uuid.uuid4())
+    file_name = file.filename
+    storage.save_file(file, file_id, file_name)
+    return file_id
 
 
 def preview(params):
-
-    uploaded_file_id = params["uploaded_file_id"]
-    bef_inp_format = params["bef_inp_format"]
-    bef_out_format = params["bef_out_format"]
-    aft_inp_format = params["aft_inp_format"]
-    aft_out_format = params["aft_out_format"]
+    file_id = params["file_id"]
+    bif = params["bef_inp_format"]
+    bof = params["bef_out_format"]
+    aif = params["aft_inp_format"]
+    aof = params["aft_out_format"]
 
     try:
-        test_suite = TestSuite.get_test_suite(
-            uploaded_file_id, bef_inp_format, bef_out_format
-        )
-        bef_preview = test_suite.get_name_list()
+        test_suite = TestSuite.get_test_suite(file_id, bif, bof)
+        bef_preview = test_suite.get_name_list(add_extra_info=True)
         try:
-            test_suite.test_suite_format = TestSuiteFormat(
-                aft_inp_format, aft_out_format
-            )
-            aft_preview = test_suite.get_name_list()
+            test_suite.test_suite_format = TestSuiteFormat(aif, aof)
+            aft_preview = test_suite.get_name_list(add_extra_info=True)
             return {"bef_preview": bef_preview, "aft_preview": aft_preview}
         except:
             return {"bef_preview": bef_preview, "aft_preview": []}
     except:
-        return {"bef_preview": [], "aft_preview": []}
+        test_suite = TestSuite.get_test_suite(file_id, "*", "*")
+        preview = test_suite.get_name_list(add_extra_info=True)
+        return {"bef_preview": preview, "aft_preview": []}
 
 
 def convert(params):
-    uploaded_file_id = params["uploaded_file_id"]
-    bef, aft = itemgetter("bef_preview", "aft_preview")(preview(params))
-    result = storage.get_renamed_archive(uploaded_file_id, bef, aft)
+    file_id = params["file_id"]
+    bif = params["bef_inp_format"]
+    bof = params["bef_out_format"]
+    aif = params["aft_inp_format"]
+    aof = params["aft_out_format"]
+    file_name = params["file_name"]
+
+    if not file_name:
+        info = database.get_upload_info(file_id)
+        file_name = info["file_name"]
+
+    test_suite = TestSuite.get_test_suite(file_id, bif, bof)
+    bef_preview = test_suite.get_name_list()
+    test_suite.test_suite_format = TestSuiteFormat(aif, aof)
+    aft_preview = test_suite.get_name_list()
+
+    result = storage.get_renamed_archive(file_id, bef_preview, aft_preview, file_name)
     return result
+
+
+def prefill(params):
+    file_id = params["file_id"]
+    info = database.get_upload_info(file_id)
+
+    file_name = info["file_name"]
+    inp_format = ""  # TODO
+    out_format = ""  # TODO
+
+    return {
+        "file_name": file_name,
+        "inp_format": inp_format,
+        "out_format": out_format,
+    }
+
+
+def get_file_name(file_id):
+    info = database.get_upload_info(file_id)
+    return info["file_name"]

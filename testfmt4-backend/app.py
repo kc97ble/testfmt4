@@ -17,12 +17,10 @@ def hello_world():
 
 @app.route("/upload", methods=["POST"])
 def upload():
-    app.logger.info(request.form)
-    app.logger.info(request.files)
     file = request.files["file"]
-    uploaded_file_id = logic.save_file(file)
+    file_id = logic.save_file(file)
     time.sleep(2)
-    return {"uploaded_file_id": uploaded_file_id}
+    return {"file_id": file_id}
 
 
 @app.route("/preview", methods=["POST"])
@@ -39,6 +37,16 @@ def convert():
     return result
 
 
+@app.route("/prefill", methods=["POST"])
+def prefill():
+    result = logic.prefill(request.form.to_dict())
+    time.sleep(2)
+    return result
+
+
 @app.route("/download/<string:file_id>", methods=["GET"])
 def download(file_id):
-    return send_from_directory(storage.FOLDER, file_id)
+    file_name = request.args.get("file_name") or logic.get_file_name(file_id)
+    return send_from_directory(
+        storage.FOLDER, file_id, as_attachment=True, attachment_filename=file_name
+    )

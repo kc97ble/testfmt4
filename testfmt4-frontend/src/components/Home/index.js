@@ -1,28 +1,11 @@
 import React, { useState } from "react";
-import Navbar from "react-bootstrap/Navbar";
+
 import { Container, Row, Col, Button } from "react-bootstrap";
 import Form from "react-bootstrap/Form";
 import { useHistory } from "react-router-dom";
-
 import * as api from "../../api";
+import TopBar from "../../common/TopBar";
 import "./style.css";
-
-function TopBar() {
-  return (
-    <Navbar bg="dark" variant="dark">
-      <Navbar.Brand href="#home">
-        <img
-          alt=""
-          src="logo192.png"
-          width="30"
-          height="30"
-          className="d-inline-block align-top "
-        />{" "}
-        Test Formatter 4
-      </Navbar.Brand>
-    </Navbar>
-  );
-}
 
 function get(obj, ...args) {
   for (let i = 0; i < args.length; i++) {
@@ -49,9 +32,7 @@ function MainForm() {
             setFiles(e.target.files);
           }}
         />
-        <Form.File.Label data-browse="Choose file">
-          {fileName || ""}
-        </Form.File.Label>
+        <Form.File.Label data-browse="Choose file">{fileName || ""}</Form.File.Label>
       </Form.File>
       <Button
         variant="primary"
@@ -59,7 +40,7 @@ function MainForm() {
         block={true}
         disabled={!fileName}
         onClick={async () => {
-          const { uploaded_file_id: fileID } = await api.uploadFile(files[0]);
+          const { file_id: fileID } = await api.uploadFile({ file: files[0] });
           history.push("/edit/" + fileID);
         }}
       >
