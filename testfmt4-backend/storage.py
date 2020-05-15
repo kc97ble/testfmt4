@@ -1,13 +1,13 @@
 import os
 import uuid
-import database
 from zipfile import ZipFile, ZIP_DEFLATED
 
-FOLDER = "/tmp"
+import database
+import settings
 
 
 def id_to_path(id):
-    return os.path.join(FOLDER, id)
+    return os.path.join(settings.UPLOAD_FOLDER, id)
 
 
 def get_file_list_in_archive(file_id):
@@ -33,3 +33,7 @@ def get_renamed_archive(source_file_id, bef, aft, file_name):
     source.close()
     database.add_upload_info(target_file_id, file_name)
     return {"file_id": target_file_id}
+
+
+def get_upload_folder():
+    return settings.UPLOAD_FOLDER

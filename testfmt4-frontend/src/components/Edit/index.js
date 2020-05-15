@@ -41,10 +41,15 @@ function Preview(props) {
 }
 
 function OneSide(props) {
-  const { state, setState } = props;
+  const { state, setState, label } = props;
   const onFieldChange = fieldChanged(state, setState);
   return (
     <>
+      <Form.Group>
+        <Form.Label>
+          <strong>{label}</strong>
+        </Form.Label>
+      </Form.Group>
       <Form.Group>
         <Form.Label>Input format</Form.Label>
         <Form.Control
@@ -154,12 +159,14 @@ function DownloadButton(props) {
   );
 }
 
+const DEFAULT_STATE = { inpFormat: "", outFormat: "", preview: [] };
+
 function EditForm(props) {
   const { fileID } = props;
   const history = useHistory();
 
-  const [bef, setBef] = useState({ inpFormat: "", outFormat: "", preview: [] });
-  const [aft, setAft] = useState({ inpFormat: "", outFormat: "", preview: [] });
+  const [bef, setBef] = useState(DEFAULT_STATE);
+  const [aft, setAft] = useState(DEFAULT_STATE);
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -178,16 +185,14 @@ function EditForm(props) {
     (async () => {
       const { file_name, inp_format, out_format } = await getPrefilledInputs(fileID);
       setFileName(file_name || "");
-      setBef({ inpFormat: inp_format, outFormat: out_format, preview: [] });
-      const { bef_preview, aft_preview } = await previewTestSuite(fileID, bef, aft);
-      setBef({ ...bef, preview: bef_preview });
-      setAft({ ...aft, preview: aft_preview });
+      const { bef_preview } = await previewTestSuite(fileID, DEFAULT_STATE, DEFAULT_STATE);
+      setBef({ inpFormat: inp_format, outFormat: out_format, preview: bef_preview });
       setLoading(false);
     })();
   }, [fileID]);
 
   return (
-    <div>
+    <div className="mt-4">
       <Row style={{ display: loading ? "block" : "none" }}>
         <Col style={{ display: "flex", justifyContent: "center" }}>
           <Spinner animation="border" />
@@ -198,10 +203,10 @@ function EditForm(props) {
           <Form>
             <Row>
               <Col>
-                <OneSide state={bef} setState={setBef} />
+                <OneSide label="Before" state={bef} setState={setBef} />
               </Col>
               <Col>
-                <OneSide state={aft} setState={setAft} />
+                <OneSide label="After" state={aft} setState={setAft} />
               </Col>
             </Row>
             <Row>

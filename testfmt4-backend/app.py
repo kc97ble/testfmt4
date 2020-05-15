@@ -11,8 +11,8 @@ flask_cors(app)
 
 
 @app.route("/")
-def hello_world():
-    return "Hello, World!"
+def intro():
+    return "testfmt4-backend"
 
 
 @app.route("/upload", methods=["POST"])
@@ -44,5 +44,8 @@ def prefill():
 def download(file_id):
     file_name = request.args.get("file_name") or logic.get_file_name(file_id)
     return send_from_directory(
-        storage.FOLDER, file_id, as_attachment=True, attachment_filename=file_name
+        storage.get_upload_folder(),
+        file_id,
+        as_attachment=True,
+        attachment_filename=file_name,
     )

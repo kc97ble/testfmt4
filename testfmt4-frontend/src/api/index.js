@@ -1,5 +1,5 @@
-const BACKEND = "http://localhost:5000";
-const PUBLIC_BACKEND = "http://localhost:5000";
+const BACKEND = process.env.BACKEND || "http://localhost:5000";
+const PUBLIC_BACKEND = process.env.PUBLIC_BACKEND || "http://localhost:5000";
 
 function getFormDataFromParams(params, keys) {
   const formData = new FormData();

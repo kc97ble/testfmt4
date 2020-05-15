@@ -1,7 +1,9 @@
 import sqlalchemy as sa
+from sqlalchemy.engine.url import URL
 
-# TODO: change db location
-engine = sa.create_engine("sqlite:////tmp/test.db")
+import settings
+
+engine = sa.create_engine(URL(drivername="sqlite", database=settings.DATABASE_FILE))
 metaData = sa.MetaData(engine)
 
 uploads_table = sa.Table(

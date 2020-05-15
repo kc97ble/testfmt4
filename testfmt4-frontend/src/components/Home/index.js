@@ -17,26 +17,26 @@ function get(obj, ...args) {
   return obj;
 }
 
-function UploadButton(props) {
-  const { onClick } = props;
-  const [loading, setLoading] = useState(false);
-  const caption = loading ? "Uploading..." : "Upload";
-  return (
-    <Button
-      variant="primary"
-      className="mt-3"
-      block={true}
-      onClick={async (e) => {
-        setLoading(true);
-        await onClick(e);
-        setLoading(false);
-      }}
-      disabled={loading}
-    >
-      {caption}
-    </Button>
-  );
-}
+// function UploadButton(props) {
+//   const { onClick } = props;
+//   const [loading, setLoading] = useState(false);
+//   const caption = loading ? "Uploading..." : "Upload";
+//   return (
+//     <Button
+//       variant="primary"
+//       className="mt-3"
+//       block={true}
+//       onClick={async (e) => {
+//         setLoading(true);
+//         await onClick(e);
+//         setLoading(false);
+//       }}
+//       disabled={loading}
+//     >
+//       {caption}
+//     </Button>
+//   );
+// }
 
 function MainForm() {
   const [files, setFiles] = useState(null);
