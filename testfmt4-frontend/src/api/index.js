@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 const BACKEND = process.env.BACKEND || "http://localhost:5000";
 
 function getFormDataFromParams(params, keys) {
