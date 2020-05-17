@@ -35,7 +35,7 @@ export async function previewTestSuite(params) {
   const formData = getFormDataFromParams(params, requiredKeys);
   const response = await fetch(`${BACKEND}/preview`, { method: "POST", body: formData });
   const data = await response.json();
-  const expectedKeys = ["bef_preview", "aft_preview"];
+  const expectedKeys = ["bef_preview", "aft_preview", "error_msg"];
   return filterKeys(data, expectedKeys);
 }
 
@@ -44,7 +44,7 @@ export async function convertTestSuite(params) {
   const formData = getFormDataFromParams(params, requiredKeys);
   const response = await fetch(`${BACKEND}/convert`, { method: "POST", body: formData });
   const data = await response.json();
-  const expectedKeys = ["file_id"];
+  const expectedKeys = ["file_id", "error_msg"];
   return filterKeys(data, expectedKeys);
 }
 
@@ -53,7 +53,7 @@ export async function getPrefilledInputs(params) {
   const formData = getFormDataFromParams(params, requiredKeys);
   const response = await fetch(`${BACKEND}/prefill`, { method: "POST", body: formData });
   const data = await response.json();
-  const expectedKeys = ["inp_format", "out_format", "file_name"];
+  const expectedKeys = ["inp_format", "out_format", "file_name", "error_msg"];
   return filterKeys(data, expectedKeys);
 }
 

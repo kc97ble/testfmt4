@@ -1,3 +1,4 @@
+import os
 import uuid
 from operator import itemgetter
 
@@ -53,9 +54,16 @@ class TestSuite:
         return result
 
 
+def is_valid_file_type(file_name):
+    _, ext = os.path.splitext(file_name)
+    return ext in [".zip", ".ZIP"]
+
+
 def save_file(file):
     file_id = str(uuid.uuid4())
     file_name = file.filename
+    if not is_valid_file_type(file_name):
+        raise Exception("400: Only ZIP files are supported")
     storage.save_file(file, file_id, file_name)
     return file_id
 

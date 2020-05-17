@@ -74,12 +74,8 @@ function OneSide(props) {
   );
 }
 
-// const history = useHistory();
-// const { url } = await api.formatTestSuite({ bef, aft });
-// history.push(url);
-
 async function convertTestSuite(fileID, bef, aft, fileName) {
-  return await api.convertTestSuite({
+  const data = await api.convertTestSuite({
     file_id: fileID,
     bef_inp_format: bef.inpFormat,
     bef_out_format: bef.outFormat,
@@ -87,27 +83,38 @@ async function convertTestSuite(fileID, bef, aft, fileName) {
     aft_out_format: aft.outFormat,
     file_name: fileName,
   });
+  console.log(data);
+
+  return {
+    fileID: data.file_id,
+    errorMsg: data.error_msg,
+  };
 }
 
 async function previewTestSuite(fileID, bef, aft) {
-  return await api.previewTestSuite({
+  const data = await api.previewTestSuite({
     file_id: fileID,
     bef_inp_format: bef.inpFormat,
     bef_out_format: bef.outFormat,
     aft_inp_format: aft.inpFormat,
     aft_out_format: aft.outFormat,
   });
+  return {
+    befPreview: data.bef_preview,
+    aftPreview: data.aft_preview,
+    errorMsg: data.error_msg,
+  };
 }
 
 async function getPrefilledInputs(fileID) {
-  return await api.getPrefilledInputs({
-    file_id: fileID,
-  });
+  const data = await api.getPrefilledInputs({ file_id: fileID });
+  return {
+    inpFormat: data.inp_format,
+    outFormat: data.out_format,
+    fileName: data.file_name,
+    errorMsg: data.error_msg,
+  };
 }
-
-// function useQuery() {
-//   return new URLSearchParams(useLocation().search);
-// }
 
 function FileNameInput(props) {
   const { state, setState } = props;
@@ -167,23 +174,35 @@ function EditForm(props) {
   const onRefresh = async () => {
     if (refreshing) return;
     setRefreshing(true);
-    const { bef_preview, aft_preview } = await previewTestSuite(fileID, bef, aft);
-    setBef((bef) => ({ ...bef, preview: bef_preview }));
-    setAft((aft) => ({ ...aft, preview: aft_preview }));
+    const { befPreview, aftPreview, errorMsg } = await previewTestSuite(fileID, bef, aft);
+    if (errorMsg) {
+      alert(errorMsg);
+    } else {
+      setBef((bef) => ({ ...bef, preview: befPreview }));
+      setAft((aft) => ({ ...aft, preview: aftPreview }));
+    }
     setRefreshing(false);
   };
 
   const onDownload = async () => {
-    const { file_id } = await convertTestSuite(fileID, bef, aft, fileName);
-    history.push(`/download/${file_id}`);
+    const data = await convertTestSuite(fileID, bef, aft, fileName);
+    if (data.errorMsg) {
+      alert(data.errorMsg);
+    } else {
+      history.push(`/download/${data.fileID}`);
+    }
   };
 
   useEffect(() => {
     (async () => {
-      const { file_name, inp_format, out_format } = await getPrefilledInputs(fileID);
-      setFileName(file_name || "");
-      const { bef_preview } = await previewTestSuite(fileID, DEFAULT_STATE, DEFAULT_STATE);
-      setBef({ inpFormat: inp_format, outFormat: out_format, preview: bef_preview });
+      const { fileName, inpFormat, outFormat } = await getPrefilledInputs(fileID);
+      setFileName(fileName || "");
+      const { befPreview, errorMsg } = await previewTestSuite(fileID, DEFAULT_STATE, DEFAULT_STATE);
+      if (errorMsg) {
+        alert(errorMsg);
+      } else {
+        setBef({ inpFormat: inpFormat, outFormat: outFormat, preview: befPreview });
+      }
       setLoading(false);
     })();
   }, [fileID]);

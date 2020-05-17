@@ -42,7 +42,7 @@ VÍ DỤ
 LƯU Ý
 
 - Hiện tại, trang web chỉ hỗ trợ tệp ZIP
-- Sử dụng dấu '/' (slash) thay vì dấu '\' (backslash) trong đường dẫn.
+- Sử dụng dấu '/' (slash) thay vì dấu '\\' (backslash) trong đường dẫn.
 - Các bạn có thể copy link để chia sẻ bộ test cho người khác. Tuy nhiên, các bộ test lâu ngày sẽ bị xóa đi sau một thời gian.
 
 BÁO LỖI

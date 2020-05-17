@@ -6,13 +6,15 @@ SAMPLE_SIZE = 16
 NUMBERED_MM = ["0", "1", "00", "01", "000", "001", "0000", "0001"]
 VALID_MM = ["*"] + NUMBERED_MM
 
-MSG_TOO_MANY_OCCURRENCES = "Invalid pattern: Pattern cannot have more than one '{}'"
-MSG_MM_NOT_FOUND = "Invalid pattern: Wildcard not found. Wildcard list: {}"
+MSG_TOO_MANY_OCCURRENCES = (
+    "400: Invalid pattern: Pattern cannot have more than one '{}'"
+)
+MSG_MM_NOT_FOUND = "400: Invalid pattern: Wildcard not found. Wildcard list: {}"
 
 
 class Pattern:
     def __init__(self, ll, mm, rr):
-        assert mm in VALID_MM
+        assert mm in VALID_MM, "Invalid wildcard"
         self.ll = ll
         self.mm = mm
         self.rr = rr
@@ -34,7 +36,7 @@ class Pattern:
                     raise Exception(MSG_TOO_MANY_OCCURRENCES.format(mm))
                 i = text.index(mm)
                 return cls(text[:i], mm, text[i + len(mm) :])
-        raise Exception(MSG_MM_NOT_FOUND, ",".join(VALID_MM))
+        raise Exception(MSG_MM_NOT_FOUND.format(",".join(VALID_MM)))
 
     def to_string(self):
         return self.ll + self.mm + self.rr
@@ -58,7 +60,7 @@ class Pattern:
         return name[len(self.ll) : len(name) - len(self.rr)]
 
     def get_test_id_from_index(self, index):
-        assert self.mm in NUMBERED_MM
+        assert self.mm in NUMBERED_MM, "Wildcard is not a number"
         return str(int(self.mm) + index).zfill(len(self.mm))
 
     def get_name(self, test_id, index=None, use_index=False):
@@ -78,7 +80,7 @@ class Pattern:
 
 class PatternPair:
     def __init__(self, x: Pattern, y: Pattern):
-        assert x.mm == y.mm
+        assert x.mm == y.mm, "Input wildcard and output wildcard must be equal"
         self.x = x
         self.y = y
 
