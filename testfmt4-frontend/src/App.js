@@ -1,6 +1,8 @@
 import React from "react";
 import Home from "./components/Home";
 import Edit from "./components/Edit";
+import Help from "./components/Help";
+import Feedback from "./components/Feedback";
 import Download from "./components/Download";
 import NotFound from "./components/NotFound";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
@@ -18,6 +20,12 @@ function App() {
         </Route>
         <Route path="/download/:fileID">
           <Download />
+        </Route>
+        <Route path="/help">
+          <Help />
+        </Route>
+        <Route path="/feedback">
+          <Feedback />
         </Route>
         <Route path="*">
           <NotFound />
