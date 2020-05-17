@@ -25,6 +25,7 @@ def upload():
 @app.route("/preview", methods=["POST"])
 def preview():
     result = logic.preview(request.form.to_dict())
+    time.sleep(2)
     return result
 
 

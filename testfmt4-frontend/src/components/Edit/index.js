@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
@@ -120,20 +120,11 @@ function FileNameInput(props) {
 }
 
 function RefreshButton(props) {
-  const { onClick } = props;
-  const [loading, setLoading] = useState(false);
+  const { loading, onClick, buttonRef } = props;
+
   const caption = loading ? "Refreshing..." : "Refresh";
   return (
-    <Button
-      variant="secondary"
-      className="mr-1 long-button"
-      onClick={async (e) => {
-        setLoading(true);
-        await onClick(e);
-        setLoading(false);
-      }}
-      disabled={loading}
-    >
+    <Button variant="secondary" className="mr-1 long-button" onClick={onClick} disabled={loading} ref={buttonRef}>
       {caption}
     </Button>
   );
@@ -170,10 +161,16 @@ function EditForm(props) {
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshButton = useRef(null);
+
   const onRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
     const { bef_preview, aft_preview } = await previewTestSuite(fileID, bef, aft);
-    setBef({ ...bef, preview: bef_preview });
-    setAft({ ...aft, preview: aft_preview });
+    setBef((bef) => ({ ...bef, preview: bef_preview }));
+    setAft((aft) => ({ ...aft, preview: aft_preview }));
+    setRefreshing(false);
   };
 
   const onDownload = async () => {
@@ -190,6 +187,11 @@ function EditForm(props) {
       setLoading(false);
     })();
   }, [fileID]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => refreshButton.current.click(), 500);
+    return () => clearTimeout(handler);
+  }, [bef.inpFormat, bef.outFormat, aft.inpFormat, aft.outFormat]);
 
   return (
     <div className="mt-4">
@@ -221,7 +223,7 @@ function EditForm(props) {
             </Row>
             <Row>
               <Col>
-                <RefreshButton onClick={onRefresh} />
+                <RefreshButton buttonRef={refreshButton} loading={refreshing} onClick={onRefresh} />
                 <DownloadButton onClick={onDownload} />
               </Col>
             </Row>
