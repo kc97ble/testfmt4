@@ -91,13 +91,13 @@ async function convertTestSuite(fileID, bef, aft, fileName) {
   };
 }
 
-async function previewTestSuite(fileID, bef, aft) {
+async function previewTestSuite(fileID, befInpFormat, befOutFormat, aftInpFormat, aftOutFormat) {
   const data = await api.previewTestSuite({
     file_id: fileID,
-    bef_inp_format: bef.inpFormat,
-    bef_out_format: bef.outFormat,
-    aft_inp_format: aft.inpFormat,
-    aft_out_format: aft.outFormat,
+    bef_inp_format: befInpFormat,
+    bef_out_format: befOutFormat,
+    aft_inp_format: aftInpFormat,
+    aft_out_format: aftOutFormat,
   });
   return {
     befPreview: data.bef_preview,
@@ -157,14 +157,15 @@ function DownloadButton(props) {
   );
 }
 
-const DEFAULT_STATE = { inpFormat: "", outFormat: "", preview: [] };
+const DEFAULT_BEF = { inpFormat: "", outFormat: "", preview: [] };
+const DEFAULT_AFT = { inpFormat: "", outFormat: "", preview: [] };
 
 function EditForm(props) {
   const { fileID } = props;
   const history = useHistory();
 
-  const [bef, setBef] = useState(DEFAULT_STATE);
-  const [aft, setAft] = useState(DEFAULT_STATE);
+  const [bef, setBef] = useState(DEFAULT_BEF);
+  const [aft, setAft] = useState(DEFAULT_AFT);
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -174,7 +175,13 @@ function EditForm(props) {
   const onRefresh = async () => {
     if (refreshing) return;
     setRefreshing(true);
-    const { befPreview, aftPreview, errorMsg } = await previewTestSuite(fileID, bef, aft);
+    const { befPreview, aftPreview, errorMsg } = await previewTestSuite(
+      fileID,
+      bef.inpFormat,
+      bef.outFormat,
+      aft.inpFormat,
+      aft.outFormat
+    );
     if (errorMsg) {
       alert(errorMsg);
     } else {
@@ -195,13 +202,26 @@ function EditForm(props) {
 
   useEffect(() => {
     (async () => {
-      const { fileName, inpFormat, outFormat } = await getPrefilledInputs(fileID);
-      setFileName(fileName || "");
-      const { befPreview, errorMsg } = await previewTestSuite(fileID, DEFAULT_STATE, DEFAULT_STATE);
+      const { fileName, inpFormat, outFormat, errorMsg } = await getPrefilledInputs(fileID);
       if (errorMsg) {
         alert(errorMsg);
       } else {
-        setBef({ inpFormat: inpFormat, outFormat: outFormat, preview: befPreview });
+        setFileName(fileName || "");
+        setBef((bef) => ({ ...bef, inpFormat: inpFormat, outFormat: outFormat }));
+      }
+
+      const previewData = await previewTestSuite(
+        fileID,
+        inpFormat,
+        outFormat,
+        DEFAULT_AFT.inpFormat,
+        DEFAULT_AFT.outFormat
+      );
+      if (previewData.errorMsg) {
+        alert(previewData.errorMsg);
+      } else {
+        setBef((bef) => ({ ...bef, preview: previewData.befPreview }));
+        setAft((aft) => ({ ...aft, preview: previewData.aftPreview }));
       }
       setLoading(false);
     })();
