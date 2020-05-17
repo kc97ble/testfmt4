@@ -3,79 +3,37 @@ from operator import itemgetter
 
 import storage
 import database
-import detect
-
-
-class TestSuiteFormat:
-    def __init__(self, inp_format, out_format):
-        assert inp_format.count("*") == 1
-        assert out_format.count("*") == 1
-        self.inp_format = inp_format
-        self.out_format = out_format
-
-    def extract_test_id_with_pattern(self, pattern, name):
-        prefix_length = pattern.index("*")
-        postfix_length = len(pattern) - 1 - prefix_length
-        if not name.startswith(pattern[:prefix_length]):
-            return None
-        if not name.endswith(pattern[-postfix_length:]):
-            return None
-        return name[prefix_length : len(name) - postfix_length]
-
-    def get_test_id(self, inp_file, out_file):
-        inp_id = self.extract_test_id_with_pattern(self.inp_format, inp_file)
-        out_id = self.extract_test_id_with_pattern(self.out_format, out_file)
-        return inp_id if inp_id is not None and inp_id == out_id else None
-
-    def get_inp_name(self, test_id):
-        i = self.inp_format.index("*")
-        return self.inp_format[:i] + test_id + self.inp_format[i + 1 :]
-
-    def get_out_name(self, test_id):
-        i = self.out_format.index("*")
-        return self.out_format[:i] + test_id + self.out_format[i + 1 :]
+import pattern
 
 
 class TestSuite:
-    def __init__(self, file_id, test_suite_format, test_list, extra_files):
+    def __init__(
+        self,
+        file_id: str,
+        pattern_pair: pattern.PatternPair,
+        test_id_list: list,
+        extra_files: list,
+    ):
         self.file_id = file_id
-        self.test_suite_format = test_suite_format
-        self.test_list = test_list
+        self.pattern_pair = pattern_pair
+        self.test_id_list = test_id_list
         self.extra_files = extra_files
 
     @classmethod
-    def analyze_raw_test_suite(cls, file_id, test_suite_format):
-        paths = storage.get_file_list_in_archive(file_id)
-        test_list = []
-        extra_files = list(paths)
-
-        # this stupid nested loop can be optimized
-        for item in paths:
-            for jtem in paths:
-                if item != jtem:
-                    test_id = test_suite_format.get_test_id(item, jtem)
-                    if test_id is not None:
-                        test_list.append((test_id, item, jtem))
-                        extra_files.remove(item)
-                        extra_files.remove(jtem)
-
-        return test_list, list(extra_files)
-
-    @classmethod
-    def get_test_suite(cls, file_id, inp_format, out_format):
-        test_suite_format = TestSuiteFormat(inp_format, out_format)
-        test_list, extra_files = TestSuite.analyze_raw_test_suite(
-            file_id, test_suite_format
+    def get_test_suite(cls, file_id: str, inp_format: str, out_format: str):
+        pattern_pair = pattern.PatternPair.from_string_pair(inp_format, out_format)
+        names = storage.get_file_list_in_archive(file_id)
+        test_id_list, extra_files = pattern_pair.matches(
+            names, returns="test_id_with_extra_files"
         )
-        return TestSuite(file_id, test_suite_format, test_list, extra_files)
+        return cls(file_id, pattern_pair, test_id_list, extra_files)
 
     def get_name_list(self, add_extra_info=False):
         important_files = []
 
-        for test in self.test_list:
-            test_id, _, _ = test
-            inp_name = self.test_suite_format.get_inp_name(test_id)
-            out_name = self.test_suite_format.get_out_name(test_id)
+        for index, t in enumerate(self.test_id_list):
+            inp_name = self.pattern_pair.x.get_name(t, index=index, use_index=True)
+            out_name = self.pattern_pair.y.get_name(t, index=index, use_index=True)
             important_files.extend([inp_name, out_name])
 
         result = []
@@ -113,7 +71,7 @@ def preview(params):
         test_suite = TestSuite.get_test_suite(file_id, bif, bof)
         bef_preview = test_suite.get_name_list(add_extra_info=True)
         try:
-            test_suite.test_suite_format = TestSuiteFormat(aif, aof)
+            test_suite.pattern_pair = pattern.PatternPair.from_string_pair(aif, aof)
             aft_preview = test_suite.get_name_list(add_extra_info=True)
             return {"bef_preview": bef_preview, "aft_preview": aft_preview}
         except:
@@ -138,7 +96,7 @@ def convert(params):
 
     test_suite = TestSuite.get_test_suite(file_id, bif, bof)
     bef_preview = test_suite.get_name_list()
-    test_suite.test_suite_format = TestSuiteFormat(aif, aof)
+    test_suite.pattern_pair = pattern.PatternPair.from_string_pair(aif, aof)
     aft_preview = test_suite.get_name_list()
 
     result = storage.get_renamed_archive(file_id, bef_preview, aft_preview, file_name)
@@ -151,12 +109,12 @@ def prefill(params):
 
     file_name = info["file_name"]
     names = storage.get_file_list_in_archive(file_id)
-    inp_format, out_format = detect.find_best_format(names)
+    pattern_pair = pattern.find_best_pattern_pair(names)
 
     return {
         "file_name": file_name,
-        "inp_format": inp_format,
-        "out_format": out_format,
+        "inp_format": pattern_pair.x.to_string(),
+        "out_format": pattern_pair.y.to_string(),
     }
 
 
