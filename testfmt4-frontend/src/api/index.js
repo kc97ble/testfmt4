@@ -64,3 +64,10 @@ export function getDownloadLink(fileID) {
 export function downloadFile(fileID) {
   window.location.href = getDownloadLink(fileID);
 }
+
+export async function previewFile(fileID) {
+  const response = await fetch(`${BACKEND}/preview_file/${fileID}`);
+  const data = await response.json();
+  const expectedKeys = ["file_name", "file_size", "content"];
+  return filterKeys(data, expectedKeys);
+}

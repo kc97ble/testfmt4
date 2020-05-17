@@ -22,7 +22,7 @@ class TestSuite:
     @classmethod
     def get_test_suite(cls, file_id: str, inp_format: str, out_format: str):
         pattern_pair = pattern.PatternPair.from_string_pair(inp_format, out_format)
-        names = storage.get_file_list_in_archive(file_id)
+        names = storage.get_names_in_archive(file_id)
         test_id_list, extra_files = pattern_pair.matches(
             names, returns="test_id_with_extra_files"
         )
@@ -108,7 +108,7 @@ def prefill(params):
     info = database.get_upload_info(file_id)
 
     file_name = info["file_name"]
-    names = storage.get_file_list_in_archive(file_id)
+    names = storage.get_names_in_archive(file_id)
     pattern_pair = pattern.find_best_pattern_pair(names)
 
     return {
@@ -121,3 +121,10 @@ def prefill(params):
 def get_file_name(file_id):
     info = database.get_upload_info(file_id)
     return info["file_name"]
+
+
+def preview_file(file_id):
+    file_name = get_file_name(file_id)
+    file_size = storage.get_file_size(file_id)
+    names = storage.get_names_in_archive(file_id)
+    return {"file_name": file_name, "file_size": file_size, "content": names}

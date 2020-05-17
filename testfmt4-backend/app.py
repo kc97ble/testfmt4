@@ -49,3 +49,9 @@ def download(file_id):
         as_attachment=True,
         attachment_filename=file_name,
     )
+
+
+@app.route("/preview_file/<string:file_id>", methods=["GET"])
+def preview_file(file_id):
+    result = logic.preview_file(file_id)
+    return result

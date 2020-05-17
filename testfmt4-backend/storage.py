@@ -11,7 +11,7 @@ def id_to_path(id):
     return os.path.join(settings.UPLOAD_FOLDER, id)
 
 
-def get_file_list_in_archive(file_id):
+def get_names_in_archive(file_id):
     path = id_to_path(file_id)
     with ZipFile(path) as f:
         result = [x for x in f.namelist() if not x.endswith("/")]
@@ -39,3 +39,8 @@ def get_renamed_archive(source_file_id, bef, aft, file_name):
 
 def get_upload_folder():
     return settings.UPLOAD_FOLDER
+
+
+def get_file_size(file_id):
+    path = id_to_path(file_id)
+    return os.path.getsize(path)
