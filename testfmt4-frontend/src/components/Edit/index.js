@@ -158,7 +158,7 @@ function DownloadButton(props) {
 }
 
 const DEFAULT_BEF = { inpFormat: "", outFormat: "", preview: [] };
-const DEFAULT_AFT = { inpFormat: "", outFormat: "", preview: [] };
+const DEFAULT_AFT = { inpFormat: "input.000", outFormat: "output.000", preview: [] };
 
 function EditForm(props) {
   const { fileID } = props;
